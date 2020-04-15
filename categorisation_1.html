@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>L'économie dans l'espace CEDEAO</title>
+    <style>
+    body {
+      background-color: #F1F3F3    
+    }
+    .axis {
+      font: 15px sans-serif;
+    }
+    .axis path,
+    .axis line {
+      fill: none;
+      stroke: #D4D8DA;
+      stroke-width: 2px;
+    }
+    .graphe,#field {
+      position: relative;
+      display: inline-block;
+    }
+    </style>
+    <script src="/script/d3.v5.min.js"></script>
+    <script src="/script/RadarChart.js"></script>
+    <script src="/script/jquery.min.js"></script>
+    <script src="/script/bootstrap.min.js"></script>
+    <!-- <script src="https://d3js.org/d3-color.v1.min.js"></script>
+    <script src="https://d3js.org/d3-dispatch.v1.min.js"></script>
+    <script src="https://d3js.org/d3-ease.v1.min.js"></script>
+    <script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
+    <script src="https://d3js.org/d3-selection.v1.min.js"></script>
+    <script src="https://d3js.org/d3-timer.v1.min.js"></script>
+    <script src="https://d3js.org/d3-transition.v1.min.js"></script> -->
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-10 col-sm-12 col-xs-12 col-lg-10">
+          <h2 class="text-center">Visualisation de l'économie dans l'espace CEDEAO</h2>
+        </div>
+        <div class="col-md-2 col-sm-12 col-xs-12 col-lg-2">
+          <select id="choix_annee">
+            <option value="2005" selected>2005</option>
+            <option value="2010">2010</option>
+            <option value="2019">2019</option>
+          </select>
+        </div>
+      </div> <br>  
+      <div class="row" id="field">
+        
+      </div>
+    </div>
+      
+    <script>
+    var annee = 2005;
+    visualisation(annee);
+    
+    var width = 330,
+        height = 330;
+
+    // Config for the Radar chart
+    var config = {
+        w: width,
+        h: height,
+        maxValue: 100,
+        levels: 5,
+        ExtraWidthX: 270
+    }
+
+    //Call function to draw the Radar chart
+    function visualisation(annee){
+      Promise.all([
+          d3.csv("/donnees/donnees_benin.csv"),
+          d3.csv("/donnees/donnees_burkina.csv"),
+          d3.csv("/donnees/donnees_cabo_verde.csv"),
+          d3.csv("/donnees/donnees_cote_divoire.csv"),
+          d3.csv("/donnees/donnees_gambie.csv"),
+          d3.csv("/donnees/donnees_ghana.csv"),
+          d3.csv("/donnees/donnees_guinee.csv"),
+          d3.csv("/donnees/donnees_guinee_bissau.csv"),
+          d3.csv("/donnees/donnees_liberia.csv"),
+          d3.csv("/donnees/donnees_mali.csv"),
+          d3.csv("/donnees/donnees_niger.csv"),
+          d3.csv("/donnees/donnees_nigeria.csv"),
+          d3.csv("/donnees/donnees_senegal.csv"),
+          d3.csv("/donnees/donnees_sierra_leone.csv"),
+          d3.csv("/donnees/donnees_togo.csv"),
+        ])
+        .then(files =>{
+          var donnees_benin       = files[0];
+          var donnees_burkina     = files[1];
+          var donnees_cabo_verde    = files[2];
+          var donnees_cote_divoire  = files[3];
+          var donnees_gambie      = files[4];
+          var donnees_ghana       = files[5];
+          var donnees_guinee      = files[6];
+          var donnees_guinee_bissau   = files[7];
+          var donnees_liberia     = files[8];
+          var donnees_mali      = files[9];
+          var donnees_niger       = files[10];
+          var donnees_nigeria     = files[11];
+          var donnees_senegal     = files[12];
+          var donnees_sierra_leone  = files[13];
+          var donnees_togo      = files[14];
+
+          var pays = ["Bénin","Burkina Faso","Cap-Vert","Côte d'Ivoire","Gambie","Ghana","Guinée","Guinée Bissau","Libéria","Mali","Niger","Nigéria","Sénégal","Sierra Léone","Togo"];
+
+
+
+
+
+          var colonnes = donnees_senegal.columns;
+
+          function list_max(a,tableau) {
+            var max1 = Math.max.apply(Math, (tableau.filter(el => (el.Indicateur === a))).map(function(o) { return o.valeur_2005; }));
+            var max2 = Math.max.apply(Math, (tableau.filter(el => (el.Indicateur === a))).map(function(o) { return o.valeur_2010; }));
+            var max3 = Math.max.apply(Math, (tableau.filter(el => (el.Indicateur === a))).map(function(o) { return o.valeur_2019; }));
+
+            return Math.max(max1,max2,max3);
+          }
+
+          var part_1 = [...donnees_benin,...donnees_burkina,...donnees_cabo_verde];
+          var part_2 = [...donnees_cote_divoire,...donnees_gambie,...donnees_ghana];
+          var part_3 = [...donnees_guinee,...donnees_guinee_bissau,...donnees_liberia];
+          var part_4 = [...donnees_mali,...donnees_niger,...donnees_nigeria];
+          var part_5 = [...donnees_senegal,...donnees_sierra_leone,...donnees_togo];
+
+          function all_parts_max(modalite,partie1,partie2,partie3,partie4,partie5){
+            var lm1 = list_max(modalite,partie1);
+            var lm2 = list_max(modalite,partie2);
+            var lm3 = list_max(modalite,partie3);
+            var lm4 = list_max(modalite,partie4);
+            var lm5 = list_max(modalite,partie5);
+
+            return Math.max(lm1,lm2,lm3,lm4,lm5);
+          }
+
+          function legende(element, LegendOptions,config){
+            ////////////////////////////////////////////
+          /////////// Initiate legend ////////////////
+          ////////////////////////////////////////////
+
+          var w = config.w,
+          h = config.h;
+
+        var colorscale = d3.scaleOrdinal(d3.schemeCategory10);
+
+          var svg = d3.select(element)
+            .selectAll('svg')
+            .append('svg')
+            .attr("width", w+800)
+            // .attr("viewBox", "184 27 203 76")
+            .attr("height", h);
+
+          //Create the title for the legend
+          var text = svg.append("text")
+            .attr("class", "title")
+            .attr('transform', 'translate(90,0)') 
+            .attr("x", w - 105)
+            .attr("y", 10)
+            .attr("font-size", "11px")
+            .attr("style", "border:1px solid black;")
+            .attr("font-weight", "bold")
+            .attr("fill", "#404040")
+            .text("Rapport de chaque valeur avec le maximum de la modalité");
+              
+          //Initiate Legend 
+          var legend = svg.append("g")
+            .attr("class", "legend")
+            .attr("height", 100)
+            .attr("width", 150)
+            .attr('transform', 'translate(270,20)') 
+            ;
+            //Create colour squares
+            legend.selectAll('rect')
+              .data(LegendOptions)
+              .enter()
+              .append("rect")
+              .attr("x", w - 95)
+              .attr("y", function(d, i){ return i * 20;})
+              .attr("width", 10)
+              .attr("height", 10)
+              .style("fill", function(d, i){ return colorscale(i);})
+              ;
+            //Create text next to squares
+            legend.selectAll('text')
+              .data(LegendOptions)
+              .enter()
+              .append("text")
+              .attr("x", w - 82)
+              .attr("y", function(d, i){ return i * 20 + 9;})
+              .attr("font-size", "11px")
+              .attr("fill", "#737373")
+              .text(function(d) { return d; })
+              ;
+          }
+
+          
+          var max_PIB = all_parts_max("PIB",part_1,part_2,part_3,part_4,part_5);
+          
+          var max_taux_PIB = all_parts_max("taux_PIB",part_1,part_2,part_3,part_4,part_5);
+          
+          var max_PIB_par_habitant = all_parts_max("PIB_par_habitant",part_1,part_2,part_3,part_4,part_5);
+          
+          var max_pourcentage_va_agriculture = all_parts_max("pourcentage_va_agriculture",part_1,part_2,part_3,part_4,part_5);
+          
+          var max_pourcentage_va_industrie = all_parts_max("pourcentage_va_industrie",part_1,part_2,part_3,part_4,part_5);
+          
+          var max_services_et_autres = all_parts_max("services_et_autres",part_1,part_2,part_3,part_4,part_5);
+          
+          var max_taux_emploi_agriculture = all_parts_max("taux_emploi_agriculture",part_1,part_2,part_3,part_4,part_5);
+          
+          var max_taux_emploi_industrie = all_parts_max("taux_emploi_industrie",part_1,part_2,part_3,part_4,part_5);
+          
+          var max_taux_emploi_services = all_parts_max("taux_emploi_services",part_1,part_2,part_3,part_4,part_5);
+          
+          var max_taux_chomage = all_parts_max("taux_chomage",part_1,part_2,part_3,part_4,part_5);
+          
+          var max_population_active_femmes = all_parts_max("population_active_femmes",part_1,part_2,part_3,part_4,part_5);
+          
+          var max_population_active_hommes = all_parts_max("population_active_hommes",part_1,part_2,part_3,part_4,part_5);
+          
+          var max_IPC = all_parts_max("IPC",part_1,part_2,part_3,part_4,part_5);
+          
+          var max_indice_production_agricole = all_parts_max("indice_production_agricole",part_1,part_2,part_3,part_4,part_5);
+
+          var max_indice_production_industrielle = all_parts_max("indice_production_industrielle",part_1,part_2,part_3,part_4,part_5);
+          
+          var max_commerce_international_export = all_parts_max("commerce_international_export",part_1,part_2,part_3,part_4,part_5);
+          
+          var max_commerce_international_import = all_parts_max("commerce_international_import",part_1,part_2,part_3,part_4,part_5);
+          
+          var max_commerce_international_balance = all_parts_max("commerce_international_balance",part_1,part_2,part_3,part_4,part_5);
+          
+          var max_balance_paiements = all_parts_max("balance_paiements",part_1,part_2,part_3,part_4,part_5);
+
+          var all_maxes = 
+          {
+            "max_PIB"                           : max_PIB,
+            "max_taux_PIB"                      : max_taux_PIB,
+            "max_PIB_par_habitant"              : max_PIB_par_habitant,
+            "max_pourcentage_va_agriculture"    : max_pourcentage_va_agriculture,
+            "max_pourcentage_va_industrie"      : max_pourcentage_va_industrie,
+            "max_services_et_autres"            : max_services_et_autres,
+            "max_taux_emploi_agriculture"       : max_taux_emploi_agriculture,
+            "max_taux_emploi_industrie"         : max_taux_emploi_industrie,
+            "max_taux_emploi_services"          : max_taux_emploi_services,
+            "max_taux_chomage"                  : max_taux_chomage,
+            "max_population_active_femmes"      : max_population_active_femmes,
+            "max_population_active_hommes"      : max_population_active_hommes,
+            "max_IPC"                           : max_IPC,
+            "max_indice_production_agricole"    : max_indice_production_agricole,
+            "max_indice_production_industrielle": max_indice_production_industrielle,
+            "max_commerce_international_export" : max_commerce_international_export,
+            "max_commerce_international_import" : max_commerce_international_import,
+            "max_commerce_international_balance": max_commerce_international_balance,
+            "max_balance_paiements"             : max_balance_paiements,
+          };
+          
+
+
+          var data_set = function(annee,donnees){
+            var chart_datas = [];
+
+            var M = 0;
+            var T = "";
+            var word = "";
+
+
+            for (var y = 0; y < pays.length; y++) {
+              // pays[y]
+              chart_datas[y] = Array.from({length:donnees.length}, _ => ({area:"",value:0}));
+
+              for (var i = 0; i < files[y].length; i++) {
+              
+                
+                if(typeof chart_datas[y][i] !== "undefined"){
+                  T = String('max_'+files[y][i].Indicateur);
+                  M = all_maxes[T];
+                  // console.log(T);
+                  // console.log(M);
+
+                  word = files[y][i].Indicateur;
+                  word = word.replace(/_/g, " ");
+                  word = word.replace(/taux/g, "%");
+                  word = word.replace(/pourcentage/g, "%");
+                  word = word.replace(/population/g, "Pop.");
+                  word = word.replace(/hommes/g, "♂");
+                  word = word.replace(/femmes/g, "♀");
+                  word = word.replace(/chomage/g, "chôm.");
+                  word = word.replace(/indice/g, "ind.");
+                  word = word.replace(/production/g, "prod.");
+                  word = word.replace(/commerce international/g, "Com. Inter.");
+                  chart_datas[y][i].area = word;
+                  chart_datas[y][i].value = ((files[y][i]["valeur_"+annee]*100)/M);
+                  
+
+                  // if(files[y][i].Indicateur == "balance_paiements") {
+                  //   console.log(chart_datas[y][i].value);
+                  // }
+                  
+                }
+              }
+              chart_datas[y] = chart_datas[y].filter(el => {
+                return (el.valeur_2005 !== 0);
+              });
+            }
+            return chart_datas;
+          }
+
+           ///////////////////////////////////////////////////
+          /////////// TRANSFORMATION EN POURCENTAGES ////////
+         ///////////////////////////////////////////////////
+
+          var data_set_all = function(donnees){
+            var chart_datas = [];
+
+            var M = 0;
+            var T = "";
+            var word = "";
+
+            chart_datas = Array.from({length:donnees.length}, _ => ({Indicateur:"",valeur_2005:0,valeur_2010:0,valeur_2019:0}));
+
+            for (var y = 0; y < 19; y++) {
+              // pays[y]
+                            
+              
+                
+                if(typeof chart_datas[y] !== "undefined"){
+                  M = list_max(donnees[y].Indicateur,donnees);
+                  // console.log(T);
+                  // console.log(M);
+
+                  chart_datas[y].Indicateur = donnees[y].Indicateur;
+                  chart_datas[y].valeur_2005 = ((donnees[y]["valeur_2005"]*100)/M);
+                  chart_datas[y].valeur_2010 = ((donnees[y]["valeur_2010"]*100)/M);
+                  chart_datas[y].valeur_2019 = ((donnees[y]["valeur_2019"]*100)/M);
+                  
+
+                  // if(donnees[y][i].Indicateur == "balance_paiements") {
+                  //   console.log(chart_datas[y][i].value);
+                  // }
+                  
+                }
+              
+              
+            }
+            chart_datas = chart_datas.filter(el => {
+              return (el.value !== 0);
+            });
+            return chart_datas;
+          }
+          // console.log(data_set_all(donnees_senegal));
+
+          Array.prototype.avg = function (prop) {
+            var total = 0;
+            for (var i = 0; i < this.length; i++) {
+              total += parseFloat(this[i][prop]);
+            }
+            return total/(this.length);
+          }
+
+           ////////////////////////////////////////////
+          /////////// Initiate categorisation ////////
+         ////////////////////////////////////////////
+
+          function categorisation(d){
+            var data = data_set_all(d);
+            // console.log(data_set_all(data));
+            // console.log(d);
+            ////////-- Catégorie : Niveau de vie --//////////
+            var PIB = data.find(o =>{
+              return o.Indicateur === "PIB";
+            });
+            var taux_PIB = data.find(o =>{
+              return o.Indicateur === "taux_PIB";
+            });
+            var PIB_par_habitant = data.find(o =>{
+              return o.Indicateur === "PIB_par_habitant";
+            });
+            var IPC = data.find(o =>{
+              return o.Indicateur === "IPC";
+            });
+
+            var niveau_de_vie = [PIB,taux_PIB,PIB_par_habitant,IPC].filter(el => {
+              return (el != undefined);
+            });
+
+            var a = {
+              'Indicateur'  : 'niveau_de_vie',
+              'valeur_2005' : niveau_de_vie.avg('valeur_2005'),
+              'valeur_2010' : niveau_de_vie.avg('valeur_2010'),
+              'valeur_2019' : niveau_de_vie.avg('valeur_2019'),
+            };
+
+
+            ////////-- Catégorie : Valeur ajoutée --//////////
+            var pourcentage_va_agriculture = data.find(o =>{
+              return o.Indicateur === "pourcentage_va_agriculture";
+            });
+            var pourcentage_va_industrie = data.find(o =>{
+              return o.Indicateur === "pourcentage_va_industrie";
+            });
+            var services_et_autres = data.find(o =>{
+              return o.Indicateur === "services_et_autres";
+            });
+
+            var valeur_ajoutee = [pourcentage_va_agriculture,pourcentage_va_industrie,services_et_autres].filter(el => {
+              return (el != undefined);
+            });
+
+            var b = {
+              'Indicateur'  : 'valeur_ajoutee',
+              'valeur_2005' : valeur_ajoutee.avg('valeur_2005'),
+              'valeur_2010' : valeur_ajoutee.avg('valeur_2010'),
+              'valeur_2019' : valeur_ajoutee.avg('valeur_2019'),
+            };
+
+
+            ////////-- Catégorie : Taux d'emploi --//////////
+            var taux_emploi_agriculture = data.find(o =>{
+              return o.Indicateur === "taux_emploi_agriculture";
+            });
+            var taux_emploi_industrie = data.find(o =>{
+              return o.Indicateur === "taux_emploi_industrie";
+            });
+            var taux_emploi_services = data.find(o =>{
+              return o.Indicateur === "taux_emploi_services";
+            });
+
+            var taux_emploi = [taux_emploi_agriculture,taux_emploi_industrie,taux_emploi_services].filter(el => {
+              return (el != undefined);
+            });
+
+            var c = {
+              'Indicateur'  : 'taux_emploi',
+              'valeur_2005' : taux_emploi.avg('valeur_2005'),
+              'valeur_2010' : taux_emploi.avg('valeur_2010'),
+              'valeur_2019' : taux_emploi.avg('valeur_2019'),
+            };
+
+
+            ////////-- Catégorie : Taux de chômage --//////////
+            var chomage = data.find(o =>{
+              return o.Indicateur === "taux_chomage";
+            });
+
+            var taux_chomage = [chomage].filter(el => {
+              return (el != undefined);
+            });
+
+            var d = {
+              'Indicateur'  : 'taux_chomage',
+              'valeur_2005' : taux_chomage.avg('valeur_2005'),
+              'valeur_2010' : taux_chomage.avg('valeur_2010'),
+              'valeur_2019' : taux_chomage.avg('valeur_2019'),
+            };
+
+
+            ////////-- Catégorie : Population active --//////////
+            var population_active_hommes = data.find(o =>{
+              return o.Indicateur === "population_active_hommes";
+            });
+            var population_active_femmes = data.find(o =>{
+              return o.Indicateur === "population_active_femmes";
+            });
+
+            var population_active = [population_active_hommes,population_active_femmes].filter(el => {
+              return (el != undefined);
+            });
+
+            var e = {
+              'Indicateur'  : 'population_active',
+              'valeur_2005' : population_active.avg('valeur_2005'),
+              'valeur_2010' : population_active.avg('valeur_2010'),
+              'valeur_2019' : population_active.avg('valeur_2019'),
+            };
+
+
+            ////////-- Catégorie : Productivité --//////////
+            var indice_production_agricole = data.find(o =>{
+              return o.Indicateur === "indice_production_agricole";
+            });
+            var indice_production_industrielle = data.find(o =>{
+              return o.Indicateur === "indice_production_industrielle";
+            });
+
+            var productivite = [indice_production_agricole,indice_production_industrielle].filter(el => {
+              return (el != undefined);
+            });
+
+            var f = {
+              'Indicateur'  : 'productivite',
+              'valeur_2005' : productivite.avg('valeur_2005'),
+              'valeur_2010' : productivite.avg('valeur_2010'),
+              'valeur_2019' : productivite.avg('valeur_2019'),
+            };
+
+
+            ////////-- Catégorie : Taux d'emploi --//////////
+            var commerce_international_export = data.find(o =>{
+              return o.Indicateur === "commerce_international_export";
+            });
+
+            var commerce_international_import = data.find(o =>{
+              return o.Indicateur === "commerce_international_import";
+            });
+            var commerce_international_balance = data.find(o =>{
+              return o.Indicateur === "commerce_international_balance";
+            });
+            var balance_paiements = data.find(o =>{
+              return o.Indicateur === "balance_paiements";
+            });
+
+            var commerce_international = [commerce_international_export,commerce_international_import,commerce_international_balance,balance_paiements].filter(el => {
+              return (el != undefined);
+            });
+
+
+            var g = {
+              'Indicateur'  : 'commerce_international',
+              'valeur_2005' : commerce_international.avg('valeur_2005'),
+              'valeur_2010' : commerce_international.avg('valeur_2010'),
+              'valeur_2019' : commerce_international.avg('valeur_2019'),
+            };
+
+            return [a,b,c,d,e,f,g];
+          }
+
+          // console.log(data_set_all(donnees_senegal));
+          // console.log(categorisation(donnees_senegal));
+
+
+          
+            // console.log(Math.abs(-100));
+          
+
+          ///////////////////////////////////////////////////////////////////
+         //////////////// REPRESENTATION DES DONNEES ///////////////////////
+        ///////////////////////////////////////////////////////////////////
+
+        var chart_data;
+
+        for (var i = 0; i < pays.length; i++) {
+          if (pays[i] !== "Nigéria") {
+            //Legend titles
+            var LegendOptions = [pays[11], pays[i]];
+
+            //Data
+            // var d = chart_data;
+            chart_data = data_set(2005,categorisation(files[i]))
+            var data = [chart_data[11], chart_data[i]];
+
+            var chart2 = d3.select("#field").append("div").attr("id","chart"+i).attr("class", "col-md-6 col-sm-12 col-xs-12 col-lg-4 graphe").attr("style", "border:1px solid black;");
+
+            RadarChart.draw("#chart"+i, data, config);
+
+            legende("#chart"+i, LegendOptions, config);
+          }
+        }
+
+        /*  ///////////////////////////////////////////////////////////////
+           //////////// COMMENTAIRES SUR LA CATEGORISATION ///////////////
+          ///////////////////////////////////////////////////////////////
+          || La fonction categorisation(donnees) reçoit directement les données et fait la
+          || catégorisation.
+          ||
+          || La fonction data_set(annee,donnees) transforme les données en un tableau contenant
+          || les attributs "area" pour le nom de la modalité, et "value" pour sa valeur.
+          || Si votre jeu de données a des noms de variables différents de ceux-là, il vous
+          || suffit juste de modifier le code de la fonction data_set(donnees) et mettre les
+          || noms correspondants.
+          ||________________________________________________________________________________
+          ||________________________________________________________________________________ 
+        */
+
+        $("#choix_annee").change(function(){
+          for (var i = 0; i < pays.length; i++) {
+            var chart_data_update = data_set($(this).val(),categorisation(files[i]));
+            var update_data = [chart_data_update[11], chart_data_update[i]];
+            RadarChart.update("#chart"+i, update_data, config);
+
+            //Legend titles
+            var LegendOptions = [pays[11], pays[i]];
+            legende("#chart"+i, LegendOptions, config);
+          }
+        });
+
+        
+    });
+    }
+      
+    </script>
+  </body>
+</html>
