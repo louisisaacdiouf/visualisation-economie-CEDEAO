@@ -2,8 +2,8 @@ function draw(data,annee,element){
 
   var titre = element.append("h2").text("Modalités de l'année "+annee);
 
-  var margin = {top: 20, right: 300, bottom: 30, left: 40},
-    width = 3600 - margin.left - margin.right,
+  var margin = {top: 20, right: 50, bottom: 30, left: 40},
+    width = 1200 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
   var x0 = d3.scale.ordinal()
@@ -38,7 +38,7 @@ var svg = element.append("svg")
 
   x0.domain(categoriesNames);
   x1.domain(rateNames).rangeRoundBands([0, x0.rangeBand()]);
-  y.domain([d3.min(data, function(categorie) { return d3.min(categorie.values, function(d) { return d['valeur_'+annee]; }); }), d3.max(data, function(categorie) { return d3.max(categorie.values, function(d) { return d['valeur_'+annee]; }); })]);
+  y.domain([0, d3.max(data, function(categorie) { return d3.max(categorie.values, function(d) { return d['valeur_'+annee]; }); })]);
 
   svg.append("g")
       .attr("class", "x axis")
@@ -71,21 +71,8 @@ var svg = element.append("svg")
       .attr("width", x1.rangeBand())
       .attr("x", function(d) { return x1(d.Indicateur); })
       .style("fill", function(d) { return color(d.Indicateur) })
-      .attr("y", function(d) { return y(0); })/*
-      .attr("height", function(d) { return height - y(0); })
-      .on("mouseover", function(d) {    
-            div.transition()    
-                .duration(200)    
-                .style("opacity", .9);    
-            div .html(d.Indicateur + "<br/>"  + d['valeur_'+annee])  
-                .style("left", (d3.event.pageX) + "px")   
-                .style("top", (d3.event.pageY - 28) + "px");  
-            })          
-        .on("mouseout", function(d) {   
-            div.transition()    
-                .duration(500)    
-                .style("opacity", 0); 
-        })*/;
+      .attr("y", function(d) { return y(0); })
+      .attr("height", function(d) { return height - y(0); });
 
   slice.selectAll("rect")
       .transition()
@@ -94,26 +81,5 @@ var svg = element.append("svg")
       .attr("y", function(d) { return y(d['valeur_'+annee]); })
       .attr("height", function(d) { return height - y(d['valeur_'+annee]); });
 
-  //Legend
-  var legend = svg.selectAll(".legend")
-      .data(data[0].values.map(function(d) { return d.Indicateur; }).reverse())
-  .enter().append("g")
-      .attr("class", "legend")
-      .attr("transform", function(d,i) { return "translate("+250+"," + i * 20 + ")"; })
-      .style("opacity","0");
-
-  legend.append("rect")
-      .attr("x", width - 18)
-      .attr("width", 18)
-      .attr("height", 18)
-      .style("fill", function(d) { return color(d); });
-
-  legend.append("text")
-      .attr("x", width - 24)
-      .attr("y", 9)
-      .attr("dy", ".35em")
-      .style("text-anchor", "end")
-      .text(function(d) {return d; });
-
-  legend.transition().duration(500).delay(function(d,i){ return 1300 + 100 * i; }).style("opacity","1");
+  
 }

@@ -347,6 +347,71 @@
           }
         });
 
+
+        var annee = 2005;
+    var PIB = [{"pays":"Bénin", "note":40},{"pays":"Burkina Faso","note":46},{"pays":"Cap-Vert","note":30},{"pays":"Côte d'Ivoire","note":60},{"pays":"Gambie","note":29},{"pays":"Ghana","note":15},{"pays":"Libéria","note":28},{"pays":"Mali","note":19},{"pays":"Niger","note":35},{"pays":"Nigéria","note":100},{"pays":"Sénégal","note":70},{"pays":"Sierra Léone","note":50},{"pays":"Togo","note":32},{"pays":"Guinée","note":16},{"pays":"Guinée bissao","note":15}];
+            
+    
+
+    // Config for the Radar chart
+    var margin = {top:200, right:90, bottom:60,left:100},
+    width=600,height=600;
+
+     var svg = d3.select("body").append("svg")
+          .attr("width",width + margin.left + margin.right)
+          .attr("id","graphique")
+          .style("background-color","Snow")
+          .attr("height",height + margin.top + margin.bottom)
+          .append("g")
+          .attr("transform","translate(" + margin.left + "." + margin.top + ")");
+
+
+          var y=d3.scaleOrdinal()
+            .rangeRoundBands([0,width],0.10);
+          
+          var x=d3.scale.linear()  
+            .range([0,height]);
+            
+          var xAxis=d3.svg.axis() 
+          .scale(x) 
+          .orient("bottom");
+          
+          var yAxis=d3.svg.axis() 
+          .scale(y) 
+          .orient("left")
+          .ticks(10);
+
+           PIB.forEach(function(d){
+            d.pays=d.pays;
+            d.note=d.note
+          });
+
+           
+
+          y.domain(PIB.map(function(d){return d.pays}));
+          x.domain([0,d3.max(PIB,function(d){return d.note})])
+
+          svg.append("g")
+  .attr("class","x axis")
+  .attr("transform","translate(0,"+height+")")
+  .call(xAxis);
+  
+ svg.append("g")
+  .attr("class","y axis")
+  .call(yAxis);
+
+
+var group = svg.append("g");
+  group.selectAll("bar")
+  .data(PIB)
+  .enter()
+  .append("rect")
+  .attr("class","bar")
+  .attr("height",y.rangeBand())
+  .attr("y",function(d){return y(d.pays);})
+  .attr("width",function(d){return x(d.note);})
+  .style("fill", "steelblue");
+
         
     });
     }

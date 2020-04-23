@@ -25,10 +25,7 @@
   </head>
   <body>
     <div id="generalisation">
-      <h1>Première catégorisation</h1><br>
-      <p>Expression des variables par rapport au maximum du type,<br>
-      pour avoir chaque variable en pourcentage, avec la variable maximale à 100%.<br>
-    </p><br>
+      <h1>Présentation Généralisée des données</h1><br>
     </div>
     <script src="/datas.js"></script>
     <script src="/draw.js"></script>
@@ -485,7 +482,8 @@
         // var uniformisation = data_set_all(donnees_senegal);
 
         for (var i = 0; i < donnees_json.length; i++) {
-          donnees_json[i].values = data_set_all(donnees_json[i].values);
+          var content = data_set_all(donnees_json[i].values);
+          donnees_json[i].values = categorisation(content);
         }
 
         // console.log(donnees_json);

@@ -5,7 +5,8 @@
     <title>L'économie dans l'espace CEDEAO</title>
     <style>
     body {
-      background-color: #F1F3F3    
+      background-color: #F1F3F3;
+      font: 10px sans-serif; 
     }
     .axis {
       font: 10px sans-serif;
@@ -20,18 +21,27 @@
       position: relative;
       display: inline-block;
     }
+    div.tooltip { 
+    position: absolute;     
+    text-align: center;     
+    width: 60px;          
+    height: 28px;         
+    padding: 2px;       
+    font: 12px sans-serif;    
+    background: lightsteelblue; 
+    border: 0px;    
+    border-radius: 8px;     
+    pointer-events: none;     
+}
     </style>
     <script src="https://d3js.org/d3.v3.min.js"></script>
   </head>
   <body>
     <div id="generalisation">
-      <h1>Première catégorisation</h1><br>
-      <p>Expression des variables par rapport au maximum du type,<br>
-      pour avoir chaque variable en pourcentage, avec la variable maximale à 100%.<br>
-    </p><br>
+      <h1>Présentation Généralisée des données</h1><br>
     </div>
     <script src="/datas.js"></script>
-    <script src="/draw.js"></script>
+    <script src="/draw2.js"></script>
     <script>
     var annee = 2005;
     visualisation(annee,data);
@@ -284,6 +294,14 @@
             return total/(this.length);
           }
 
+          function moyenne_tableau(tab){
+            var total = 0;
+            for(var i = 0; i < tab.length; i++) {
+                total += tab[i];
+            }
+            return (total / tab.length);
+          }
+
            ////////////////////////////////////////////
           /////////// Initiate categorisation ////////
          ////////////////////////////////////////////
@@ -456,7 +474,33 @@
 
 
           
-            // console.log(Math.abs(-100));
+          ////////////////////////////////////////////////////////////////////
+         ////////////// NOTE FINALE /////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////
+
+        var note_finale = function(donnees){
+            var chart_datas = [];
+            var data = donnees;
+
+            chart_datas = Array.from({length:donnees.length}, _ => ({Indicateur:"_",valeur_2005:0,valeur_2010:0,valeur_2019:0}));
+
+            for (var y = 0; y < pays.length; y++) {
+              // pays[y]
+                            
+              
+                chart_datas[y].Indicateur = "Niveau économique "+pays[y];
+                chart_datas[y].valeur_2005 = moyenne_tableau(donnees[y].values.map(function(d) { return d.valeur_2005; }));
+                chart_datas[y].valeur_2010 = moyenne_tableau(donnees[y].values.map(function(d) { return d.valeur_2010; }));
+                chart_datas[y].valeur_2019 = moyenne_tableau(donnees[y].values.map(function(d) { return d.valeur_2019; }));
+                
+              
+              data[y].values = [chart_datas[y]];
+            }
+            chart_datas = chart_datas.filter(el => {
+              return (el.value !== 0);
+            });
+            return data;
+          }
           
 
           ///////////////////////////////////////////////////////////////////
@@ -485,10 +529,11 @@
         // var uniformisation = data_set_all(donnees_senegal);
 
         for (var i = 0; i < donnees_json.length; i++) {
-          donnees_json[i].values = data_set_all(donnees_json[i].values);
+          var content = data_set_all(donnees_json[i].values);
+          donnees_json[i].values = categorisation(content);
         }
 
-        // console.log(donnees_json);
+        console.log(note_finale(donnees_json));
 
         var generalisation = d3.select('#generalisation');
         draw(donnees_json,2005,generalisation);
